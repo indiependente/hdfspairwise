@@ -1,5 +1,12 @@
 package alignment;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Writable;
+
 public class HDFSMatrixManager {
 	private HDFSMatrixBlock currentBlock;
 	private int currentBlockId;
@@ -36,7 +43,7 @@ public class HDFSMatrixManager {
 	private static final int INTEGER_SIZE_LOG = 2;
 
 	
-	private HDFSMatrixManager(){
+	private HDFSMatrixManager() {
 		currentBlockId = START_BLOCK_INDEX;
 		currentBlock = null;
 		blockCount = 0;
@@ -50,7 +57,7 @@ public class HDFSMatrixManager {
 	}
 
 	public static HDFSMatrixManager getInstance(){
-		if(instance == null)
+		if (instance == null)
 			instance = new HDFSMatrixManager();
 		
 		return instance;
