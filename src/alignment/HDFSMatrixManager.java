@@ -1,5 +1,7 @@
 package alignment;
 
+import java.util.ArrayList;
+
 public class HDFSMatrixManager {
 	private HDFSMatrixBlock currentBlock;
 	private int currentBlockId;
@@ -96,6 +98,55 @@ public class HDFSMatrixManager {
 		return (currentBlock = new HDFSMatrixBlock(currentBlockId, xRealOffset, yRealOffset, w, h, blockElementsCount)); 
 	}
 
+	
+	
+	/**
+	 * 
+	 * Returns the blockids list of the dependencies for the block id.
+	 * @param id The block to look for dependencies
+	 * @return The list of dependencies
+	 * 
+	 * 
+	 * 	x
+	 *   ------->
+	 * y |
+	 *   |
+	 *   |
+	 *   v
+	 *   
+	 *   
+	 */
+	public ArrayList<Integer> getDependenciesForBlock(int id){
+		int xOffset = id % nBlock;
+		int yOffset = (id - xOffset) / mBlock;
+		ArrayList<Integer> depList = new ArrayList<Integer>();
+		
+		if (xOffset == 0 && yOffset == 0)
+			return depList;
+		
+		if (yOffset == 0 && xOffset != 0) // go left
+			depList.add(getIdByOffsets(xOffset - 1, yOffset));
+		
+		else if(xOffset == 0 && yOffset != 0) // go up
+			depList.add(getIdByOffsets(xOffset, yOffset - 1));
+		
+		else if(xOffset != 0 && yOffset != 0){
+			depList.add(getIdByOffsets(xOffset - 1, yOffset)); // go left
+			depList.add(getIdByOffsets(xOffset, yOffset -1)); // go up
+			depList.add(getIdByOffsets(xOffset -1 , yOffset -1)); // go diag
+		}
+		
+		return depList;
+	}
+	
+	public int getIdByOffsets(int xOff, int yOff){
+		return (xOff + yOff * ((int) Math.sqrt(blockElementsCount)));
+	}
+	
+	public HDFSMatrixBlock getBlockById(int id){
+		return null;
+	}
+	
 	public int getLength1() {
 		return length1;
 	}
