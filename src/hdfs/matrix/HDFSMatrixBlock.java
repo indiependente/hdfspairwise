@@ -88,6 +88,8 @@ public class HDFSMatrixBlock implements Writable {
 		System.gc();
 	}
 
+	
+	//write sposta direttamente il cursore quindi non mi serve la read
 	public void write(DataOutput stream) throws IOException {
 		HDFSMatrixManager.getInstance().storeMatrixBlockSize(id, width, height);
 		IntWritable[][] tempMatrix = new IntWritable[width][height];
@@ -100,6 +102,18 @@ public class HDFSMatrixBlock implements Writable {
 		}
 		(new TwoDArrayWritable(IntWritable.class, tempMatrix)).write(stream);
 		System.gc();
+	}
+	
+	public int get(int i,int j){
+		return matrix[i][j];
+	}
+	
+	public void set(int x,int i,int j){
+		matrix[i][j]=x;
+	}
+	
+	public int[][] getMatrix(){
+		return matrix;
 	}
 	
 	
