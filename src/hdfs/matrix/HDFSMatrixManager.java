@@ -1,4 +1,6 @@
-package alignment;
+package hdfs.matrix;
+
+import hdfs.ConfigurationLoader;
 
 import java.util.ArrayList;
 
@@ -42,7 +44,7 @@ public class HDFSMatrixManager {
 		currentBlockId = START_BLOCK_INDEX;
 		currentBlock = null;
 		blockCount = 0;
-		blockSize = 64 * (1 << 20);
+		blockSize = ConfigurationLoader.getInstance().getIntValue(ConfigurationLoader.BLOCK_SIZE); //64 * (1 << 20);
 		blockElementsCount = 0;
 	}
 	
@@ -104,6 +106,18 @@ public class HDFSMatrixManager {
 
 	public int getLength2() {
 		return length2;
+	}
+
+
+	public void storeMatrixBlockSize(int id, int width, int height) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public int[] getMatrixBlockSize(int id) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	

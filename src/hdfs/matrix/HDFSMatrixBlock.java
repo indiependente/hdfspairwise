@@ -1,4 +1,6 @@
-package alignment;
+package hdfs.matrix;
+
+import hdfs.ConfigurationLoader;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -15,7 +17,8 @@ public class HDFSMatrixBlock implements Writable {
 	private int xOffset;
 	private int yOffset;
 	private int blockElementsCount;
-	private IntWritable[][] matrix;
+	private int blockSize;
+	private int[][] matrix;
 	
 	public HDFSMatrixBlock(int id, int x, int y, int width, int height, int blockElementsCount){
 		this.id = id;
@@ -24,10 +27,11 @@ public class HDFSMatrixBlock implements Writable {
 		this.xOffset = x;
 		this.yOffset = y;
 		this.blockElementsCount = blockElementsCount;
-		this.matrix = new IntWritable[this.width][this.height];
+		this.blockSize = ConfigurationLoader.getInstance().getIntValue(ConfigurationLoader.BLOCK_SIZE);
+		this.matrix = new int[width][height];
 	}
 	
-	public void finalize(){
+	public void finalize() {
 		matrix = null;
 	}
 	
@@ -69,20 +73,32 @@ public class HDFSMatrixBlock implements Writable {
 	public void readFields(DataInput stream) throws IOException {
 		Writable[][] tempMatrix = null;
 		TwoDArrayWritable tmp = new TwoDArrayWritable(IntWritable.class);
+		int[] size = HDFSMatrixManager.getInstance().getMatrixBlockSize(id);
+		width = size[0];
+		height = size[1];
 		tmp.readFields(stream);
 		tempMatrix = tmp.get();
-		for (int i = 0; i < tempMatrix.length; i++)
+		for (int i = 0; i < width; i++)
 		{
-			for (int j = 0; j < tempMatrix.length; j++)
+			for (int j = 0; j < height; j++)
 			{
-				matrix[i][j].set(((IntWritable) tempMatrix[i][j]).get());
+				matrix[i][j] = ((IntWritable) tempMatrix[i][j]).get();
 			}
 		}
 		System.gc();
 	}
 
 	public void write(DataOutput stream) throws IOException {
-		(new TwoDArrayWritable(IntWritable.class, matrix)).write(stream);
+		HDFSMatrixManager.getInstance().storeMatrixBlockSize(id, width, height);
+		IntWritable[][] tempMatrix = new IntWritable[width][height];
+		for (int i = 0; i < width; i++)
+		{
+			for (int j = 0; j < height; j++)
+			{
+				tempMatrix[i][j].set(matrix[i][j]);
+			}
+		}
+		(new TwoDArrayWritable(IntWritable.class, tempMatrix)).write(stream);
 		System.gc();
 	}
 	
