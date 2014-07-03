@@ -66,7 +66,8 @@ public class HDFSMatrixManager {
 		 * 
 		 */
 		toHdfs = new Path(ConfigurationLoader.HADOOP_HOME+"matrice");
-		Configuration conf = new Configuration();
+		ConfigurationLoader loader = ConfigurationLoader.getInstance();
+		Configuration conf = loader.getConfiguration();
 		fs = FileSystem.get(conf);
 		
 		
