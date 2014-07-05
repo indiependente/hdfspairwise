@@ -2,7 +2,9 @@ package hdfs.matrix;
 
 import hdfs.ConfigurationLoader;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
@@ -10,11 +12,13 @@ import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.IOUtils;
 
 public class HDFSMatrixManager {
+//	private static final int meta = 16388;
 	private HDFSMatrixBlock currentBlock;
 	private int currentBlockId;
 	private static final int START_BLOCK_INDEX = -1;
 	private static HDFSMatrixManager instance = null;
 	private HashMap<Integer, int[]> sizeMap;
+	private int[] last_left_line;
 	
 	/**
 	 * Total block number
@@ -59,16 +63,16 @@ public class HDFSMatrixManager {
 		currentBlock = null;
 		blockCount = 0;
 		blockSize = ConfigurationLoader.getInstance().getIntValue(ConfigurationLoader.BLOCK_SIZE); //64 * (1 << 20);
+//		blockSize = 67108864;
 		blockElementsCount = 0;
 		sizeMap = new HashMap<Integer, int[]>();
+		last_left_line=new int[4001];
 		
-		/*
-		 * 
-		 */
-		toHdfs = new Path(ConfigurationLoader.HADOOP_HOME+"matrice");
-		Configuration conf = new Configuration();
-		fs = FileSystem.get(conf);
+//		toHdfs = new Path("matrice");
+//		System.out.println(toHdfs);
 		
+		fs = FileSystem.get(ConfigurationLoader.getInstance().getConfiguration());
+//		out = fs.create(toHdfs);		uno per ogni file
 		
 	}
 	
@@ -86,11 +90,11 @@ public class HDFSMatrixManager {
 	
 	public void setup(int length1, int length2){
 //		int elementsPerBlock = blockSize >> INTEGER_SIZE_LOG; // elements in a block
-		this.blockElementsCount = blockSize >> INTEGER_SIZE_LOG;
+		this.blockElementsCount = 4000 * 4000; //blockSize >> INTEGER_SIZE_LOG;		//Number of elements in a block
 		elementsInBlockLine = (int) Math.sqrt(blockElementsCount);
-		this.nBlock = ((int) (length1 / elementsInBlockLine)) + clamp(length1 % elementsInBlockLine, 0, 1); //rows
-		this.mBlock = ((int) (length2 / elementsInBlockLine)) + clamp(length2 % elementsInBlockLine, 0, 1); //columns
-		this.blockCount = nBlock * mBlock;
+		this.nBlock = ((int) (length1 / elementsInBlockLine)) + clamp(length1 % elementsInBlockLine, 0, 1); //Macro-blocks in a row
+		this.mBlock = ((int) (length2 / elementsInBlockLine)) + clamp(length2 % elementsInBlockLine, 0, 1); //Macro-blocks in a column
+		this.blockCount = nBlock * mBlock;	//Number of Macro-blocks
 //		this.blocksPerLine = (int) Math.sqrt(blockCount);
 		this.length1 = length1;
 		this.length2 = length2;
@@ -110,20 +114,22 @@ public class HDFSMatrixManager {
 	
 	
 	public HDFSMatrixBlock createBlock(int id){
-		int xOffset = id % nBlock;
-		int xRealOffset = xOffset * elementsInBlockLine;
-//		int y = (currentBlockId - x) / blocksPerLine;
+		int xOffset = id % nBlock;								//Offset relativo al blocco
+		int xRealOffset = xOffset * elementsInBlockLine;		//Offset relativo all'intera matrice
+	//		int y = (currentBlockId - x) / blocksPerLine;
 		
-		int yOffset = (id - xOffset) / mBlock;
+		//int yOffset = ((id - xOffset) / mBlock);			//nessun problema con matrice quadrata
+		int yOffset = id/nBlock;
+		
 		int yRealOffset = yOffset * elementsInBlockLine;
 		/**
 		 * Block width. Keeping in mind of matrix edges.
 		 */
-		int w = (xOffset == (nBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * nBlock - length1) : elementsInBlockLine;
+		int w = (xOffset == (nBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * nBlock - length2) : elementsInBlockLine;
 		/**
 		 * Block height. Keeping in mind of matrix edges.
 		 */
-		int h = (xOffset == (mBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * mBlock - length2) : elementsInBlockLine;
+		int h = (yOffset == (mBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * mBlock - length1) : elementsInBlockLine;
 		
 		return (new HDFSMatrixBlock(id, xRealOffset, yRealOffset, w, h, blockElementsCount));
 	}
@@ -161,24 +167,99 @@ public class HDFSMatrixManager {
 	
 	//dopo aver computato il blocco scrivererlo sull'hdfs ???
 	public void writeOnHDFS(HDFSMatrixBlock block) throws IOException{
-		//out = fs.create(toHdfs);
-		out = fs.append(toHdfs);
+		//if(fs.exists(toHdfs))out = fs.append(toHdfs);
+		//else 
+		out=fs.create(new Path(block.getId()+""));
+//		System.out.println(out.getPos());
 		block.write(out);
 		out.close();
 	}
 	
 	public HDFSMatrixBlock readFromHDFS(int id) throws IOException{
-		in = fs.open(toHdfs);
-		in.seek(id*blockSize);
+//		in = fs.open(toHdfs);
+		in = fs.open(new Path(id+""));
+		//in.seek(id*blockSize);
+//		in.seek(id*(blockSize+meta));
 		HDFSMatrixBlock m = createBlock(id);
 		m.readFields(in);
 		return m;
 	}
 	
 	
-	//Occorre effettuare il calcolo delle dipendenze
+	/**
+	 	*
+	 	* Returns the blockids list of the dependencies for the block id.
+	 	* @param id The block to look for dependencies
+	 	* @return The list of dependencies
+	 	*
+	 	*
+	 	* 		 x
+	 	* 	 ------->
+	 	*   |
+	 	* y |
+	 	* 	|
+	 	* 	v
+	 	*
+	 	*
+	 	*/
+	
+	public ArrayList<Integer> getDependenciesForBlock(int id){
+		int xOffset = id % nBlock;
+//		int yOffset = (id - xOffset) / mBlock;
+		int yOffset = id/nBlock;
+		ArrayList<Integer> depList = new ArrayList<Integer>();
+
+		if (xOffset == 0 && yOffset == 0)
+			return depList;
+
+		if (yOffset == 0 && xOffset != 0) // go left
+			depList.add(getIdByOffsets(xOffset - 1, yOffset));
+
+		else if(xOffset == 0 && yOffset != 0) // go up
+			depList.add(getIdByOffsets(xOffset, yOffset - 1));
+
+		else if(xOffset != 0 && yOffset != 0){
+			depList.add(getIdByOffsets(xOffset - 1, yOffset)); // go left
+			depList.add(getIdByOffsets(xOffset, yOffset -1)); // go up
+			depList.add(getIdByOffsets(xOffset -1 , yOffset -1)); // go diag
+	}
+
+		return depList;
+}
+	
+	public int getIdByOffsets(int xOff, int yOff){
+//		return (xOff + yOff * ((int) Math.sqrt(blockElementsCount)));
+		return (nBlock*yOff)+xOff;
+	}
 	
 	
+	public int getBlockCount(){
+		return blockCount;
+	}
 	
+	public int getBlockElementsCount(){
+		return blockElementsCount;
+	}
+	
+	public void closeOutStream() throws IOException{
+		out.close();
+	}
+
+
+	public int getNblock() {
+		return nBlock;
+	}
+	
+	public int getMblock(){
+		return mBlock;
+	}
+	
+	public void setLLLine(int val,int pos){
+		last_left_line[pos]=val;
+	}
+	
+	public int[] getLLLine(){
+		return last_left_line;
+	}
 	
 }

@@ -5,9 +5,11 @@ import org.apache.hadoop.fs.Path;
 
 public class ConfigurationLoader {
 
-	public static final String BLOCK_SIZE = "dfs.blocksize";
+	public static final String BLOCK_SIZE = "dfs.block.size";
 	
-	public static final String HADOOP_HOME = "/";
+	//public static final String HADOOP_HOME = "/";
+	public static final String HADOOP_HOME = "/usr/local/hadoop/etc/hadoop/";
+	
 	
 	private static final String[] configFilesToLoad = { "core-site.xml", "hdfs-site.xml" };
 	
@@ -15,9 +17,11 @@ public class ConfigurationLoader {
 	
 	private ConfigurationLoader()
 	{
+		
 		conf = new Configuration();
 		for (String s : configFilesToLoad)
 			conf.addResource(new Path(HADOOP_HOME + s));
+		
 	}
 	
 	public Configuration getConfiguration()
@@ -32,8 +36,9 @@ public class ConfigurationLoader {
 	
 	public int getIntValue(String key)
 	{
-		return Integer.getInteger(getValue(key));
+		return Integer.parseInt(getValue(key));
 	}
+	
 	
 	private static ConfigurationLoader instance = null;
 	public static ConfigurationLoader getInstance()

@@ -28,7 +28,8 @@ public class HDFSMatrixBlock implements Writable {
 		this.yOffset = y;
 		this.blockElementsCount = blockElementsCount;
 		this.blockSize = ConfigurationLoader.getInstance().getIntValue(ConfigurationLoader.BLOCK_SIZE);
-		this.matrix = new int[width][height];
+//		this.blockSize = 67108864;
+		this.matrix = new int[this.width][this.height]; //new int[width][height];
 	}
 	
 	public void finalize() {
@@ -97,10 +98,11 @@ public class HDFSMatrixBlock implements Writable {
 		{
 			for (int j = 0; j < height; j++)
 			{
-				tempMatrix[i][j].set(matrix[i][j]);
+				tempMatrix[i][j] = new IntWritable(matrix[i][j]);
 			}
 		}
 		(new TwoDArrayWritable(IntWritable.class, tempMatrix)).write(stream);
+		
 		System.gc();
 	}
 	
@@ -109,6 +111,7 @@ public class HDFSMatrixBlock implements Writable {
 	}
 	
 	public void set(int x,int i,int j){
+		
 		matrix[i][j]=x;
 	}
 	

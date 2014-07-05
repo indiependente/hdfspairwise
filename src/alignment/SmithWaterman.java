@@ -186,7 +186,6 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 		// initiate first row
 		for (c = 0; c < cols; c++)
 			matrix[0][c] = 0;
-
 		// keep track of the maximum score
 		this.max_row = this.max_col = max_score = 0;
 

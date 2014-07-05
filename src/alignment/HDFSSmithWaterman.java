@@ -1,10 +1,16 @@
 package alignment;
 
+import hdfs.matrix.HDFSMatrixBlock;
+import hdfs.matrix.HDFSMatrixManager;
+
 import java.io.IOException;
 import java.io.Reader;
 
 public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 {
+	
+	
+	
 	/**
 	 * The first sequence of an alignment.
 	 */
@@ -78,7 +84,11 @@ public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 		throws IncompatibleScoringSchemeException
 	{
 		// compute the matrix
-		computeMatrix ();
+		try {
+			computeMatrix ();
+		} catch (IOException e) {
+			System.out.println("Error in computation of score matrix");
+		}
 
 		// build and return an optimal local alignment
 		PairwiseAlignment alignment = buildOptimalAlignment ();
@@ -94,47 +104,153 @@ public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 	 *
 	 * @throws IncompatibleScoringSchemeException If the scoring scheme is not compatible
 	 * with the loaded sequences.
+	 * @throws IOException 
 	 */
-	protected void computeMatrix () throws IncompatibleScoringSchemeException
+	protected void computeMatrix () throws IncompatibleScoringSchemeException, IOException
 	{
+		HDFSMatrixManager manager = HDFSMatrixManager.getInstance();
+		HDFSMatrixBlock block;
 		int	r, c, rows, cols, ins, sub, del, max_score;
 
-		rows = seq1.length()+1;
-		cols = seq2.length()+1;
+		int k,z,w;
+//		rows = seq1.length()+1;				
+//		cols = seq2.length()+1;
 
-		matrix = new int [rows][cols];
-
-		// initiate first row
-		for (c = 0; c < cols; c++)
-			matrix[0][c] = 0;
-
+		manager.setup(seq1.length()+1,seq2.length()+1);
+		
 		// keep track of the maximum score
 		this.max_row = this.max_col = max_score = 0;
-
-		// calculates the similarity matrix (row-wise)
-		for (r = 1; r < rows; r++)
-		{
-			// initiate first column
-			matrix[r][0] = 0;
-
-			for (c = 1; c < cols; c++)
-			{
-				ins = matrix[r][c-1] + scoreInsertion(seq2.charAt(c));
-				sub = matrix[r-1][c-1] + scoreSubstitution(seq1.charAt(r),seq2.charAt(c));
-				del = matrix[r-1][c] + scoreDeletion(seq1.charAt(r));
-
+		
+		//matrix = new int [rows][cols];
+		block=manager.getNextBlock();
+		
+		System.out.println("Height "+block.getHeight());
+		System.out.println("Width "+block.getWidth());
+		System.out.println("Lunghezza file 1 -->"+seq1.length());
+		System.out.println("Lunghezza file 2 -->"+seq2.length());
+		
+		/*
+		 * compute block number 0
+		 */
+		
+		//compute first line...
+	
+		for(k=0;k<block.getHeight();k++){
+				block.set(0,0, k);
+		}
+		
+		//manager.setLLLine(block.get(0, block.getHeight()-1), 0);
+		
+		
+		System.out.println("before compute other lines");
+		//compute other lines
+		for(z=1;z<block.getWidth();z++){
+			
+			block.set(0, z, 0);
+			
+			for(w=1;w<block.getHeight();w++){
+				
+				ins = block.get(z,w-1) + scoreInsertion(seq1.charAt(w));			//seq1 o seq2?
+				sub = block.get(z-1,w-1) + scoreSubstitution(seq1.charAt(w),seq2.charAt(z));
+				del = block.get(z-1,w) + scoreDeletion(seq2.charAt(z));
+				
+				
 				// choose the greatest
-				matrix[r][c] = max (ins, sub, del, 0);
+				block.set(max (ins, sub, del, 0), z, w);
 
-				if (matrix[r][c] > max_score)
+				if (block.get(z, w) > max_score)
 				{
 					// keep track of the maximum score
-					max_score = matrix[r][c];
-					this.max_row = r; this.max_col = c;
+					max_score = block.get(z, w);
+					this.max_row = z; this.max_col = w;	//DA TESTARE!
+				}
+				
+			}
+//			manager.setLLLine(block.get(z, block.getHeight()-1), z);
+		}
+		
+		manager.writeOnHDFS(block);
+		block=null;
+		//System.gc();
+		
+		
+		
+		System.out.println("After first block");
+		
+		//compute other blocks on first line		(ciclo)
+		
+		System.out.println("Nblock = "+manager.getNblock());
+		for(c=1;c<manager.getNblock();c++){
+		
+		block=manager.getNextBlock();
+		
+		//compute first line...
+		
+		for(k=0;k<block.getHeight();k++){
+			block.set(0,0, k);
+		}
+			
+		System.out.println("before computing first column size of seq1 = "+seq1.length());	
+		
+		//compute first column
+			for(z=1;z<block.getWidth();z++){
+			
+				ins = manager.getLLLine()[z] + scoreInsertion(seq1.charAt(block.getxOffset()));
+				sub = manager.getLLLine()[z-1] + scoreSubstitution(seq1.charAt(block.getxOffset()),seq2.charAt(block.getyOffset()+z));
+				del = block.get(z-1,0) + scoreDeletion(seq2.charAt(block.getyOffset()+z));
+				
+				
+				// choose the greatest
+				block.set(max (ins, sub, del, 0), z, 0);
+
+				if (block.get(z, 0) > max_score)
+				{
+					// keep track of the maximum score
+					max_score = block.get(z, 0);
+					this.max_row = block.getyOffset()+z; this.max_col = block.getxOffset()+0;	//DA TESTARE!
 				}
 			}
+			
+			//compute the rest of matrix
+			
+			for(z=1;z<block.getWidth();z++){
+				
+					
+					for(w=1;w<block.getHeight();w++){
+						ins = block.get(z,w-1) + scoreInsertion(seq1.charAt(block.getxOffset()+w));			//seq1 o seq2?
+						sub = block.get(z-1,w-1) + scoreSubstitution(seq1.charAt(block.getxOffset()+w),seq2.charAt(block.getyOffset()+z));
+						del = block.get(z-1,w) + scoreDeletion(seq2.charAt(block.getyOffset()+z));
+						
+						
+						// choose the greatest
+						block.set(max (ins, sub, del, 0), z, w);
+
+						if (block.get(z, w) > max_score)
+						{
+							// keep track of the maximum score
+							max_score = block.get(z, w);
+							this.max_row = block.getyOffset()+z; this.max_col = block.getxOffset()+w;	//DA TESTARE!
+						}
+						
+						
+					}
+					
+					manager.setLLLine(block.get(z, block.getHeight()-1), z);
+					
+			}
+			
+			manager.writeOnHDFS(block);
+			block=null;
+			System.gc();
 		}
+			
+
+		
+		
+
+
 	}
+	
 
 	/**
 	 * Builds an optimal local alignment between the loaded sequences.  Before it is
@@ -309,5 +425,9 @@ public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 		}
 
 		return max_score;
+	}
+	
+	public void printSeq1(){
+		System.out.println(seq1.toString());
 	}
 }
