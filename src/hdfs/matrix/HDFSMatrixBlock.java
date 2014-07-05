@@ -119,5 +119,13 @@ public class HDFSMatrixBlock implements Writable {
 		return matrix;
 	}
 	
+	public int[] getLastLine(){
+		int array[]=new int[this.height];
+		for(int j=0;j<this.height;j++){
+			array[j]=matrix[this.width-1][j];
+		}
+		return array;
+	}
+	
 	
 }

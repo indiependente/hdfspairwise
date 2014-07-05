@@ -248,9 +248,10 @@ public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 		}
 
 
-
+		int[] last_line;
 
 		//compute from second line of macro-blocks
+		System.out.println("Mblock = "+manager.getMblock());
 		int diag_el;
 		HDFSMatrixBlock temp;
 
@@ -265,11 +266,13 @@ public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 			
 			//read the upper block
 			temp = manager.readFromHDFS(block.getId()-manager.getNblock());
+			
+			//read element in the corner
 			diag_el = temp.get(temp.getWidth()-1, temp.getHeight()-1);
 			
 			//compute first line with dependencies
 			
-				
+				//modificare temp in last_line.......!
 				for(w=1;w<block.getHeight();w++){
 					ins = block.get(0,w-1) + scoreInsertion(seq1.charAt(block.getxOffset()+w));			//seq1 o seq2?
 					sub = temp.get(temp.getWidth()-1,w-1) + scoreSubstitution(seq1.charAt(block.getxOffset()+w),seq2.charAt(block.getyOffset()+0));
@@ -293,13 +296,157 @@ public class HDFSSmithWaterman extends PairwiseAlignmentAlgorithm
 				
 				//compute the rest of matrix
 				
+				for(z=1;z<block.getWidth();z++){
+
+
+					for(w=1;w<block.getHeight();w++){
+						ins = block.get(z,w-1) + scoreInsertion(seq1.charAt(block.getxOffset()+w));			//seq1 o seq2?
+						sub = block.get(z-1,w-1) + scoreSubstitution(seq1.charAt(block.getxOffset()+w),seq2.charAt(block.getyOffset()+z));
+						del = block.get(z-1,w) + scoreDeletion(seq2.charAt(block.getyOffset()+z));
+
+
+						// choose the greatest
+						block.set(max (ins, sub, del, 0), z, w);
+
+						if (block.get(z, w) > max_score)
+						{
+							// keep track of the maximum score
+							max_score = block.get(z, w);
+							this.max_row = block.getyOffset()+z; this.max_col = block.getxOffset()+w;	//DA TESTARE!
+						}
+
+
+					}
+
+					manager.setLLLine(block.get(z, block.getHeight()-1), z);
+
+				}
+				
+				manager.writeOnHDFS(block);
+				System.out.println("computed block number "+block.getId());
+
+				block=null;
+				temp=null;
+				System.gc();
+				
+			
 				//compute other blocks on the same line
 				
 				for(int nb=1;nb<manager.getNblock();nb++){
+						block=manager.getNextBlock();
+						
+						//read the upper block
+						temp = manager.readFromHDFS(block.getId()-manager.getNblock());
+						
+						
+						//get last line of the upper block
+						last_line = temp.getLastLine();
+						
+						//compute first element
+						ins = manager.getLLLine()[0] + scoreInsertion(seq1.charAt(block.getxOffset()+0));			//seq1 o seq2?
+						sub = diag_el + scoreSubstitution(seq1.charAt(block.getxOffset()+0),seq2.charAt(block.getyOffset()+0));
+						del = last_line[0] + scoreDeletion(seq2.charAt(block.getyOffset()+0));
+
+
+						// choose the greatest
+						block.set(max (ins, sub, del, 0), 0, 0);
+
+						if (block.get(0, 0) > max_score)
+						{
+							// keep track of the maximum score
+							max_score = block.get(0, 0);
+							this.max_row = block.getyOffset()+0; this.max_col = block.getxOffset()+0;	//DA TESTARE!
+						}
+						
+						
+						//compute the rest of first line
+						
+						
+						for(w=1;w<block.getHeight();w++){
+							ins = block.get(0,w-1) + scoreInsertion(seq1.charAt(block.getxOffset()+w));			//seq1 o seq2?
+							sub = temp.get(temp.getWidth()-1,w-1) + scoreSubstitution(seq1.charAt(block.getxOffset()+w),seq2.charAt(block.getyOffset()+0));
+							del = temp.get(temp.getWidth()-1,w) + scoreDeletion(seq2.charAt(block.getyOffset()+0));				
+							
+						
+						
+						// choose the greatest
+						block.set(max (ins, sub, del, 0), 0, w);
+
+						if (block.get(0, w) > max_score)
+						{
+							// keep track of the maximum score
+							max_score = block.get(0, w);
+							this.max_row = block.getyOffset()+0; this.max_col = block.getxOffset()+w;	//DA TESTARE!
+						}
+						
+						}
+						
+						manager.setLLLine(block.get(0, block.getHeight()-1), 0);
+						
+						
+						//compute the rest of first column
+						
+						for(z=1;z<block.getWidth();z++){
+
+							ins = manager.getLLLine()[z] + scoreInsertion(seq1.charAt(block.getxOffset()));
+							sub = manager.getLLLine()[z-1] + scoreSubstitution(seq1.charAt(block.getxOffset()),seq2.charAt(block.getyOffset()+z));
+							del = block.get(z-1,0) + scoreDeletion(seq2.charAt(block.getyOffset()+z));
+
+
+							// choose the greatest
+							block.set(max (ins, sub, del, 0), z, 0);
+
+							if (block.get(z, 0) > max_score)
+							{
+								// keep track of the maximum score
+								max_score = block.get(z, 0);
+								this.max_row = block.getyOffset()+z; this.max_col = block.getxOffset()+0;	//DA TESTARE!
+							}
+						}
+						
+						//compute the rest of matrix
+						for(z=1;z<block.getWidth();z++){
+
+
+							for(w=1;w<block.getHeight();w++){
+								ins = block.get(z,w-1) + scoreInsertion(seq1.charAt(block.getxOffset()+w));			//seq1 o seq2?
+								sub = block.get(z-1,w-1) + scoreSubstitution(seq1.charAt(block.getxOffset()+w),seq2.charAt(block.getyOffset()+z));
+								del = block.get(z-1,w) + scoreDeletion(seq2.charAt(block.getyOffset()+z));
+
+
+								// choose the greatest
+								block.set(max (ins, sub, del, 0), z, w);
+
+								if (block.get(z, w) > max_score)
+								{
+									// keep track of the maximum score
+									max_score = block.get(z, w);
+									this.max_row = block.getyOffset()+z; this.max_col = block.getxOffset()+w;	//DA TESTARE!
+								}
+
+
+							}
+
+							manager.setLLLine(block.get(z, block.getHeight()-1), z);
+
+						}
+						
+						System.out.println("computed block number "+block.getId());
+
+						manager.writeOnHDFS(block);
+						//read element in the corner
+						diag_el = temp.get(temp.getWidth()-1, temp.getHeight()-1);
+						temp=null;
+						block=null;
+						System.gc();
+						
+						
 
 
 
 				}
+				
+				
 				
 			}
 
