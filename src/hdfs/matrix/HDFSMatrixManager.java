@@ -125,11 +125,11 @@ public class HDFSMatrixManager {
 		/**
 		 * Block width. Keeping in mind of matrix edges.
 		 */
-		int w = (xOffset == (nBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * nBlock - length2) : elementsInBlockLine;
+		int w = (yOffset == (mBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * mBlock - length2) : elementsInBlockLine;
 		/**
 		 * Block height. Keeping in mind of matrix edges.
 		 */
-		int h = (yOffset == (mBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * mBlock - length1) : elementsInBlockLine;
+		int h = (xOffset == (nBlock - 1)) ? elementsInBlockLine - (elementsInBlockLine * nBlock - length1) : elementsInBlockLine;
 		
 		return (new HDFSMatrixBlock(id, xRealOffset, yRealOffset, w, h, blockElementsCount));
 	}
