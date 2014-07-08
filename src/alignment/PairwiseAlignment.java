@@ -193,6 +193,20 @@ public class PairwiseAlignment implements Serializable
 		return gapped_seq1 + "\n" + score_tag_line + "\n"
 				+ gapped_seq2 + "\nScore: " + score;
 	}
+	
+	public String toStringSpl(){
+		String toReturn=new String();
+		int d=50;
+		int n= gapped_seq1.length()/d;
+		
+		for(int i=0;i<n;i++){
+			toReturn+=gapped_seq1.substring(i, i+d-1)+"\n"+score_tag_line.substring(i,i+d-1)+"\n"+gapped_seq2.substring(i, i+d-1)+"\n\n";
+		}
+		
+		toReturn+=gapped_seq1.substring(n*d)+"\n"+score_tag_line.substring(n*d)+"\n"+gapped_seq2.substring(n*d)+"\n\nScore: "+score+"\nLength of alignment: "+gapped_seq1.length();
+		
+		return toReturn;
+	}
 
     /**
 	 * Compares this object to the specified object. The result is <CODE>true</CODE> if

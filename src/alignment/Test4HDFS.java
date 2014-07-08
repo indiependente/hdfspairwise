@@ -14,51 +14,27 @@ public class Test4HDFS {
 	
 	public static void main(String[] args) throws IOException, IncompatibleScoringSchemeException{
 	
-	/*Random r=new Random();
 	
-	
-	HDFSMatrixBlock blk = new HDFSMatrixBlock(0,0,0, 20, 20, 150);
-	
-	for(int i=0;i<15;i++){
-		for(int j=0;j<10;j++){
-			blk.set(i*j, i, j);
-			System.out.print(blk.get(i, j)+" ");
-		}
-		System.out.print("\n");
-	}
-	*/
-		
-		
-
-	HDFSSmithWatermanInv sw = new HDFSSmithWatermanInv();
+	HDFSSmithWaterman sw = new HDFSSmithWaterman();
 	
 	try {
 		sw.loadSequences(new FileReader(args[0]), new FileReader(args[1]));
 	} catch (InvalidSequenceException e1) {
+		System.err.println("Error in loading sequences");
 	}
 
 	
 	
 	sw.setScoringScheme(new BasicScoringScheme(1,-1,-1));
-//	sw.computeMatrix();
-//	PairwiseAlignment pwhdfs = sw.buildOptimalAlignment();
-//	PairwiseAlignment pwhdfs = sw.computePairwiseAlignment();
 	PairwiseAlignment pw= sw.computePairwiseAlignment();
-	System.out.println(pw.toString());
-	System.out.println(pw.gapped_seq1.length());
-//	sw.computeMatrix();
-//	System.out.println(sw.getScore());
-	
-//	System.out.println("score 1 = "+sw.getScore()+" coords["+sw.max_row+","+sw.max_col+"].");
-	
-	System.out.println("\n\n\n");
+	System.out.println(pw.toStringSpl());
 	
 	
 	
 	
 	
 	
-	SmithWaterman naivesmith = new SmithWaterman();
+	/*SmithWaterman naivesmith = new SmithWaterman();
 	try {
 		naivesmith.loadSequences(new FileReader(args[0]), new FileReader(args[1]));
 	} catch (InvalidSequenceException e) {
@@ -69,8 +45,8 @@ public class Test4HDFS {
 	naivesmith.setScoringScheme(new BasicScoringScheme(1,-1,-1));
 //	naivesmith.computePairwiseAlignment();
 	PairwiseAlignment nw = naivesmith.computePairwiseAlignment();
-	System.out.println(nw.toString());
-	System.out.println(nw.gapped_seq1.length());
+	System.out.println(nw.toStringSpl());
+//	System.out.println(nw.gapped_seq1.length());
 	
 	
 //	naivesmith.computeMatrix();

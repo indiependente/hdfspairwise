@@ -232,6 +232,14 @@ public class HDFSMatrixManager {
 		return (nBlock*yOff)+xOff;
 	}
 	
+	public int getIDByCoords(int i,int j){
+		int yOff=i/4000;
+		int xOff=j/4000;
+		
+		return getIdByOffsets(xOff,yOff);
+		
+		
+	}
 	
 	public int getBlockCount(){
 		return blockCount;
@@ -260,6 +268,10 @@ public class HDFSMatrixManager {
 	
 	public int[] getLLLine(){
 		return last_left_line;
+	}
+	
+	public void setNblock(int n){
+		nBlock=n;
 	}
 	
 }

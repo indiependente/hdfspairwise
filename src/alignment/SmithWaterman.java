@@ -31,8 +31,12 @@
 
 package alignment;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.IOException;
+
+import org.junit.experimental.results.PrintableResult;
 
 /**
  * This class implement the classic local alignment algorithm (with linear gap penalty
@@ -157,10 +161,21 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 		throws IncompatibleScoringSchemeException
 	{
 		// compute the matrix
-		computeMatrix ();
+		try {
+			computeMatrix ();
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		// build and return an optimal local alignment
-		PairwiseAlignment alignment = buildOptimalAlignment ();
+		PairwiseAlignment alignment=null;
+		try {
+			alignment = buildOptimalAlignment ();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		// allow the matrix to be garbage collected
 		matrix = null;
@@ -173,8 +188,9 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 	 *
 	 * @throws IncompatibleScoringSchemeException If the scoring scheme is not compatible
 	 * with the loaded sequences.
+	 * @throws FileNotFoundException 
 	 */
-	protected void computeMatrix () throws IncompatibleScoringSchemeException
+	protected void computeMatrix () throws IncompatibleScoringSchemeException, FileNotFoundException
 	{
 		int	r, c, rows, cols, ins, sub, del, max_score;
 
@@ -212,6 +228,17 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 				}
 			}
 		}
+		
+		PrintWriter stampa = new PrintWriter("mat-naive");
+		
+		for(int l=0;l<rows;l++){
+			for(int s=0;s<cols;s++){
+				stampa.print(matrix[l][s]+" ");
+			}
+			stampa.println();
+		}
+		
+		stampa.close();
 	}
 
 	/**
@@ -222,10 +249,11 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 	 * @return an optimal local alignment between the loaded sequences
 	 * @throws IncompatibleScoringSchemeException If the scoring scheme is not compatible
 	 * with the loaded sequences.
+	 * @throws FileNotFoundException 
 	 * @see #computeMatrix
 	 */
 	protected PairwiseAlignment buildOptimalAlignment () throws
-		IncompatibleScoringSchemeException
+		IncompatibleScoringSchemeException, FileNotFoundException
 	{
 		StringBuffer gapped_seq1, score_tag_line, gapped_seq2;
 		int			 r, c, max_score, sub;
@@ -233,15 +261,18 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 		// start at the cell with maximum score
 		r = this.max_row;
 		c = this.max_col;
-
+		PrintWriter pw=new PrintWriter("naive");
+		System.out.println("Coord of max_score ["+r+","+c+"]");
 		max_score = matrix[r][c];
-
+//		System.out.println("max score = "+max_score);
+		
 		gapped_seq1		= new StringBuffer();
 		score_tag_line	= new StringBuffer();
 		gapped_seq2		= new StringBuffer();
 
 		while ((r > 0 || c > 0) && (matrix[r][c] > 0))
 		{
+			pw.println("["+r+"],["+c+"].");
 			if (c > 0)
 				if (matrix[r][c] == matrix[r][c-1] + scoreInsertion(seq2.charAt(c)))
 				{
@@ -289,6 +320,8 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 
 			r = r - 1;
 		}
+		
+		pw.close();
 
 		return new PairwiseAlignment (gapped_seq1.toString(), score_tag_line.toString(),
 										gapped_seq2.toString(), max_score);
@@ -387,5 +420,10 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 		}
 
 		return max_score;
+	}
+	
+	
+	public int[][]getMatrix(){
+		return matrix;
 	}
 }

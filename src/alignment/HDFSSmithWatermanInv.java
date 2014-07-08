@@ -89,7 +89,8 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 		try {
 			computeMatrix ();
 		} catch (IOException e) {
-			System.out.println("Error in computation of score matrix");
+			System.err.println("Error in computation of score matrix");
+			e.printStackTrace();
 		}
 
 		System.out.println("Compute matrix ok");
@@ -99,6 +100,7 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 		try {
 			alignment = buildOptimalAlignment ();
 		} catch (IOException e) {
+			System.err.println("Error in build Optimal Alignment");
 			e.printStackTrace();
 		}
 
@@ -179,7 +181,7 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 		}
 
 		/*************
-		STAMPA DELLA MATRICE NEL BLOCCO ZERO***************/
+		STAMPA DELLA MATRICE NEL BLOCCO ZERO***************
 		
 		System.out.println("Matrix hdfs");
 		
@@ -195,7 +197,7 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 		stampa.close();
 		
 		
-		/***************FINE STAMPA********************/
+		***************FINE STAMPA********************/
 		
 		manager.writeOnHDFS(block);
 		block=null;
@@ -517,7 +519,7 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 
 //		max_score = matrix[r][c];  see under|
 //											v
-		PrintWriter pw = new PrintWriter("hdfs_coords");
+//		PrintWriter pw = new PrintWriter("hdfs_coords");
 		HDFSMatrixManager manager = HDFSMatrixManager.getInstance();
 		int new_id;
 		System.out.println("Coord of max_score ["+r+" "+c+"]");
@@ -545,7 +547,7 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 			System.gc();
 			temp=manager.readFromHDFS(new_id);
 			System.out.println("new id = "+new_id);}*/
-			pw.println("["+r+"],["+c+"].");
+//			pw.println("["+r+"],["+c+"].");
 			
 			
 			if (r > 0){
@@ -664,7 +666,7 @@ public class HDFSSmithWatermanInv extends PairwiseAlignmentAlgorithm
 		
 		}
 		
-		pw.close();
+//		pw.close();
 
 		return new PairwiseAlignment (gapped_seq1.toString(), score_tag_line.toString(),
 				gapped_seq2.toString(), max_score);

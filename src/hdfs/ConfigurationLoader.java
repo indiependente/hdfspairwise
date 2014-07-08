@@ -4,11 +4,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
 public class ConfigurationLoader {
-
-	public static final String BLOCK_SIZE = "dfs.block.size";
+	//dfs.block.size for ps
+	public static final String BLOCK_SIZE = "dfs.blocksize";
 	
 	//public static final String HADOOP_HOME = "/";
+	
+	//For ps
 	public static final String HADOOP_HOME = "/usr/local/hadoop/etc/hadoop/";
+	
+	//ps hdfs-site.xml
 	
 	
 	private static final String[] configFilesToLoad = { "core-site.xml", "hdfs-site.xml" };
