@@ -27,7 +27,11 @@ public class Test4HDFS {
 	
 	sw.setScoringScheme(new BasicScoringScheme(1,-1,-1));
 	PairwiseAlignment pw= sw.computePairwiseAlignment();
-	System.out.println(pw.toStringSpl());
+//	System.out.println(pw.toStringSpl());
+	
+	PrintWriter stampa = new PrintWriter("Output_algo_splitted");
+	stampa.print(pw.toStringSpl());
+	stampa.close();
 	
 	
 	

@@ -182,6 +182,7 @@ public class HDFSMatrixManager {
 //		in.seek(id*(blockSize+meta));
 		HDFSMatrixBlock m = createBlock(id);
 		m.readFields(in);
+		in.close();
 		return m;
 	}
 	
