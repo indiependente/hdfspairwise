@@ -201,7 +201,7 @@ public class PairwiseAlignment implements Serializable
 		
 		for(int i=0;i<n;i++){
 //			System.out.println("["+(i*d)+","+(i*d+d-1)+"]");
-			toReturn+=gapped_seq1.substring(i*d, (i*d)+d-1)+"\n"+score_tag_line.substring(i*d,(i*d)+d-1)+"\n"+gapped_seq2.substring(i*d, (i*d)+d-1)+"\n\n";
+			toReturn+=gapped_seq1.substring(i*d, (i*d)+d)+"\n"+score_tag_line.substring(i*d,(i*d)+d)+"\n"+gapped_seq2.substring(i*d, (i*d)+d)+"\n\n";
 		}
 //		System.out.println("["+(n*d)+","+(gapped_seq1.length()-1)+"]");
 		toReturn+=gapped_seq1.substring(n*d)+"\n"+score_tag_line.substring(n*d)+"\n"+gapped_seq2.substring(n*d)+"\n\nScore: "+score+"\nLength of alignment: "+gapped_seq1.length();

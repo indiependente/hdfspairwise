@@ -262,7 +262,7 @@ public class SmithWaterman extends PairwiseAlignmentAlgorithm
 		r = this.max_row;
 		c = this.max_col;
 		PrintWriter pw=new PrintWriter("naive");
-		System.out.println("Coord of max_score ["+r+","+c+"]");
+//		System.out.println("Coord of max_score ["+r+","+c+"]");
 		max_score = matrix[r][c];
 //		System.out.println("max score = "+max_score);
 		

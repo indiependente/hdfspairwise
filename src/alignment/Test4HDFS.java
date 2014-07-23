@@ -29,12 +29,13 @@ public class Test4HDFS {
 	PairwiseAlignment pw= sw.computePairwiseAlignment();
 //	System.out.println(pw.toStringSpl());
 	
-	PrintWriter stampa = new PrintWriter("Output_algo_splitted");
-	stampa.print(pw.toStringSpl());
-	stampa.close();
+//	PrintWriter stampa = new PrintWriter("Output_algo_splitted");
+	System.out.println(pw.toStringSpl());
+//	stampa.print(pw.toStringSpl());
+//	stampa.close();
 	
 	
-	
+//	stampa=null;
 	
 	
 	
@@ -49,7 +50,10 @@ public class Test4HDFS {
 	naivesmith.setScoringScheme(new BasicScoringScheme(1,-1,-1));
 //	naivesmith.computePairwiseAlignment();
 	PairwiseAlignment nw = naivesmith.computePairwiseAlignment();
-	System.out.println(nw.toStringSpl());
+//	stampa = new PrintWriter("Output_algo_naive_splitted");
+	System.out.println(nw.toString());
+//	stampa.print(nw.toStringSpl());
+//	stampa.close();
 //	System.out.println(nw.gapped_seq1.length());
 	
 	
